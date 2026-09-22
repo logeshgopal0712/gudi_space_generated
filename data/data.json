@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "company": {
+    "companyName": "",
+    "image_id": "",
+    "image_path": "",
+    "image_src": "",
+    "image_thumbnail": "",
+    "yearStarted": 2026,
+    "tagline": "",
+    "description": "",
+    "about": ""
+  },
+  "template": {
+    "templateId": "logo-left",
+    "primaryColor": "#c79245",
+    "secondaryColor": "#172238",
+    "headerTextColor": "light",
+    "usePageColor": false,
+    "pageColor": "#fbfaf7",
+    "transparentPageColor": false,
+    "pageColorOpacity": 70,
+    "font": "modern",
+    "background_image_id": "",
+    "background_image_path": "",
+    "background_image_src": "",
+    "background_image_thumbnail": "",
+    "servicesHeading": "What we offer",
+    "servicesLayout": "vertical",
+    "sections": {
+      "about": true,
+      "services": true,
+      "gallery": true,
+      "reviews": true,
+      "contact": true,
+      "appointment": true
+    }
+  },
+  "services": [],
+  "gallery": [],
+  "reviews": [],
+  "contact": {
+    "formEndpoint": "https://api.web3forms.com/submit",
+    "accessKey": "",
+    "email": "",
+    "phone": "",
+    "address": "",
+    "showCall": false,
+    "showEmail": false
+  },
+  "reviewSettings": {
+    "formEndpoint": "https://api.web3forms.com/submit",
+    "accessKey": ""
+  },
+  "socialMedia": {
+    "instagram": "",
+    "facebook": "",
+    "linkedin": "",
+    "twitter": "",
+    "youtube": "",
+    "applePodcast": "",
+    "spotify": ""
+  },
+  "appointment": {
+    "url": ""
+  }
+}
