@@ -388,6 +388,31 @@ async function loadJson(path) {
   return response.json();
 }
 
+// Resolves once the builder's preview iframe posts the live form data in,
+// or rejects if nothing arrives within 15s. Only used when this page is
+// embedded as the preview (window.parent !== window) - see previewMode.
+function receivePreviewData() {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      window.removeEventListener("message", handleMessage);
+      reject(new Error("Preview data was not received."));
+    }, 15000);
+    const handleMessage = (event) => {
+      if (
+        event.origin !== window.location.origin ||
+        event.source !== window.parent ||
+        event.data?.type !== "website-preview-data"
+      ) {
+        return;
+      }
+      window.clearTimeout(timeout);
+      window.removeEventListener("message", handleMessage);
+      resolve(event.data.data);
+    };
+    window.addEventListener("message", handleMessage);
+  });
+}
+
 function safeHttpUrl(value) {
   if (!value) return "";
   try {
@@ -416,6 +441,10 @@ function safeAssetUrl(value) {
 
 let currentCompanyData = null;
 let currentSiteData = null;
+// True when this page is loaded inside the builder's preview iframe rather
+// than as a real deployed site. Drives receivePreviewData()/postMessage
+// above and the preview-only gallery cap in renderGallery() below.
+const previewMode = window.parent !== window;
 
 function companyInitials(companyName) {
   return String(companyName)
@@ -448,7 +477,9 @@ function applyCompanyData(company) {
     element.textContent = String(company.about || "");
   });
 
-  const logoUrl = safeAssetUrl(company.image_src || company.image_path);
+  const logoUrl = safeAssetUrl(
+    company.image_src || company.image_thumbnail || company.image_path,
+  );
   document.body.dataset.logoDisplay = logoUrl ? "image" : "text";
   const initials = companyInitials(companyName);
   document.querySelectorAll("[data-company-logo-slot]").forEach((slot) => {
@@ -645,7 +676,9 @@ function applyTemplateData(template) {
       : paper;
 
   const backgroundImage = safeAssetUrl(
-    template.background_image_src || template.background_image_path,
+    template.background_image_src ||
+      template.background_image_thumbnail ||
+      template.background_image_path,
   );
   document.body.dataset.headerImage = String(Boolean(backgroundImage));
   if (backgroundImage) {
@@ -895,7 +928,9 @@ function renderServiceMedia(service) {
     }
     return `<div class="service-media service-video"><iframe src="${escapeHtml(video)}" title="${escapeHtml(service.title)} video" loading="lazy" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`;
   }
-  const image = safeAssetUrl(service.image_src || service.image_path);
+  const image = safeAssetUrl(
+    service.image_src || service.image_thumbnail || service.image_path,
+  );
   return image
     ? `<div class="service-media"><img src="${escapeHtml(image)}" alt="${escapeHtml(service.title)}" loading="lazy" /></div>`
     : "";
@@ -1014,9 +1049,11 @@ async function renderGallery(images = currentSiteData?.gallery) {
   if (!list) return;
   try {
     if (!Array.isArray(images)) throw new Error("gallery.json must contain a list.");
-    list.innerHTML = images
+    list.innerHTML = (previewMode ? images.slice(0, 8) : images)
       .map((image) => {
-        const imageUrl = safeAssetUrl(image.image_src || image.image_path);
+        const imageUrl = safeAssetUrl(
+          image.image_src || image.image_thumbnail || image.image_path,
+        );
         return `
           <figure>
             <button class="gallery-lightbox-trigger" type="button" data-gallery-open data-gallery-src="${escapeHtml(imageUrl)}" aria-label="View full image">
@@ -1147,8 +1184,24 @@ function initializeHomeNavigation() {
 }
 
 async function initializeDataPages() {
+  if (previewMode) {
+    // Inside the builder's preview iframe there is no real server to reload
+    // data.json from, so a full page navigation (e.g. clicking the logo,
+    // which links to "index.html") wipes out the whole preview. Swallow
+    // clicks on same-page internal links while previewing instead.
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href") || "";
+      if (/^[^/]*\.html?(?:[?#]|$)/i.test(href)) {
+        event.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  }
   try {
-    const siteData = await loadJson("data/data.json");
+    const siteData =
+      previewMode ? await receivePreviewData() : await loadJson("data/data.json");
     if (!siteData || typeof siteData !== "object" || Array.isArray(siteData)) {
       throw new Error("data.json must contain a website data object.");
     }
@@ -1165,9 +1218,18 @@ async function initializeDataPages() {
     ]);
   } catch (error) {
     showFormToast(error.message, true);
+    if (previewMode) {
+      window.parent.postMessage(
+        { type: "website-preview-error", message: error.message },
+        window.location.origin,
+      );
+    }
+    return;
   }
-  await initializeWeb3FormsCaptcha();
-  initializeReviewForms();
+  if (!previewMode) {
+    await initializeWeb3FormsCaptcha();
+    initializeReviewForms();
+  }
   initializeCarousels();
   initializeHomeNavigation();
   if (window.location.hash) {
@@ -1175,6 +1237,12 @@ async function initializeDataPages() {
       behavior: "smooth",
       block: "start",
     });
+  }
+  if (previewMode) {
+    window.parent.postMessage(
+      { type: "website-preview-ready" },
+      window.location.origin,
+    );
   }
 }
 
