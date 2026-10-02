@@ -693,9 +693,9 @@ function applyTemplateData(template) {
     "about",
     "services",
     "gallery",
+    "appointment",
     "contact",
     "reviews",
-    "appointment",
   ];
   const enabledSections =
     template.sections && typeof template.sections === "object"
