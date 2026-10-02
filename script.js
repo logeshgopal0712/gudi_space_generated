@@ -658,7 +658,10 @@ function applyTemplateData(template) {
   const moodKey = String(template.mood || "").toLowerCase();
   const mood =
     template.mode === "advanced" ? MOOD_PRESETS[moodKey] : undefined;
-  const templateId = String((mood && mood.templateId) || template.templateId || "");
+  // Layout is the one mood-controlled thing people reasonably want to
+  // override directly - so an explicit templateId always wins; mood's
+  // templateId is only a fallback for when one isn't set at all.
+  const templateId = String(template.templateId || (mood && mood.templateId) || "");
   if (["logo-left", "logo-right", "centered"].includes(templateId)) {
     document.body.dataset.template = templateId;
   }
