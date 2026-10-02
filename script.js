@@ -615,17 +615,58 @@ const templateFonts = {
   },
 };
 
+// Advanced mode: a handful of named "moods" bundle together a font pairing,
+// a layout template, a services layout and a hero-logo size that read as a
+// coherent style, so picking one mood sets four things at once instead of
+// asking for each individually. Manual mode (template.mode === "manual")
+// skips this entirely and uses the explicit fields below as-is, unchanged.
+const MOOD_PRESETS = {
+  professional: {
+    font: "classic",
+    templateId: "logo-left",
+    servicesLayout: "vertical",
+    logoSize: 260,
+  },
+  warm: {
+    font: "modern",
+    templateId: "centered",
+    servicesLayout: "horizontal",
+    logoSize: 340,
+  },
+  bold: {
+    font: "modern",
+    templateId: "logo-left",
+    servicesLayout: "horizontal",
+    logoSize: 360,
+  },
+  minimal: {
+    font: "clean",
+    templateId: "centered",
+    servicesLayout: "vertical",
+    logoSize: 220,
+  },
+};
+
 function applyTemplateData(template) {
   if (!template || typeof template !== "object" || Array.isArray(template)) {
     throw new Error("template.json must contain a template object.");
   }
-  const templateId = String(template.templateId || "");
+  // Opt-in, not opt-out: mood only applies when mode is explicitly
+  // "advanced". Every existing branch's data.json predates this field, so
+  // template.mode is simply undefined there - this check can never fire
+  // for them, no matter what (or what's missing) in template.mood.
+  const moodKey = String(template.mood || "").toLowerCase();
+  const mood =
+    template.mode === "advanced" ? MOOD_PRESETS[moodKey] : undefined;
+  const templateId = String((mood && mood.templateId) || template.templateId || "");
   if (["logo-left", "logo-right", "centered"].includes(templateId)) {
     document.body.dataset.template = templateId;
   }
   const primary = normalizeHexColor(template.primaryColor);
   const secondary = normalizeHexColor(template.secondaryColor);
   const root = document.documentElement.style;
+  const logoSize = (mood && mood.logoSize) || 310;
+  root.setProperty("--logo-size", `${logoSize}px`);
   if (primary) {
     root.setProperty("--brand", primary);
     root.setProperty("--brand-dark", mixHexColor(primary, "#000000", 0.22));
@@ -681,13 +722,21 @@ function applyTemplateData(template) {
       template.background_image_path,
   );
   document.body.dataset.headerImage = String(Boolean(backgroundImage));
-  if (backgroundImage) {
-    root.setProperty("--on-secondary", "#111827");
-  }
-  const heroBackground = backgroundImage
-    ? `url("${backgroundImage.replaceAll('"', '\\"')}") center center / cover no-repeat`
-    : "radial-gradient(circle at 82% 42%, color-mix(in srgb, var(--brand) 28%, transparent), transparent 26rem), linear-gradient(135deg, var(--secondary-dark), var(--secondary) 58%, var(--secondary-dark))";
-  root.setProperty("--hero-background", heroBackground);
+  // --hero-background is the plain decorative gradient and always stays on
+  // .site-header/.page-site-header (the full-width surround) - it never
+  // carries the photo. When there IS a photo, it lives only in
+  // --hero-photo-background, applied to .hero/.page-banner - the same
+  // content-width column the nav already uses - so the photo is a
+  // contained, rounded panel that lines up with the nav instead of
+  // bleeding to the browser edges.
+  root.setProperty(
+    "--hero-background",
+    "radial-gradient(circle at 82% 42%, color-mix(in srgb, var(--brand) 28%, transparent), transparent 26rem), linear-gradient(135deg, var(--secondary-dark), var(--secondary) 58%, var(--secondary-dark))",
+  );
+  const heroPhotoBackground = backgroundImage
+    ? `linear-gradient(180deg, rgba(8, 10, 20, 0.6), rgba(8, 10, 20, 0.28) 45%, rgba(8, 10, 20, 0.66)), url("${backgroundImage.replaceAll('"', '\\"')}")`
+    : "none";
+  root.setProperty("--hero-photo-background", heroPhotoBackground);
 
   const sectionOrder = [
     "about",
@@ -716,8 +765,9 @@ function applyTemplateData(template) {
   document.querySelectorAll("[data-services-heading]").forEach((heading) => {
     heading.textContent = String(template.servicesHeading || "What we offer");
   });
+  const servicesLayout = (mood && mood.servicesLayout) || template.servicesLayout;
   document.querySelectorAll("#service-list").forEach((list) => {
-    const horizontal = template.servicesLayout === "horizontal";
+    const horizontal = servicesLayout === "horizontal";
     list.classList.toggle("horizontal-services", horizontal);
     list.classList.toggle("vertical-services", !horizontal);
   });
@@ -728,7 +778,7 @@ function applyTemplateData(template) {
       frame.src = appointmentUrl || "about:blank";
     });
 
-  const font = templateFonts[String(template.font || "")];
+  const font = templateFonts[String((mood && mood.font) || template.font || "")];
   if (font) {
     let fontLink = document.querySelector("[data-runtime-font]");
     if (!fontLink) {

@@ -97,6 +97,7 @@ a {
   background: var(--hero-background);
   background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .nav-shell,
@@ -129,6 +130,49 @@ body[data-header-image="true"] .nav-shell,
 body[data-header-image="true"] .mobile-nav {
   background: var(--header-secondary-surface);
   border-color: color-mix(in srgb, var(--secondary) 24%, transparent);
+}
+
+/* The nav surface above is light regardless of theme (it's a near-white
+   tint, see --header-secondary-surface), but the link text still used
+   --on-secondary - the color meant for a DARK surface - so it was rendering
+   near-white text on a near-white bar. Switch to --secondary-dark (already
+   dark in every theme) so it reads against the light bar instead. */
+body[data-header-image="true"] .desktop-nav a,
+body[data-header-image="true"] .mobile-nav a {
+  color: color-mix(in srgb, var(--secondary-dark) 80%, transparent);
+}
+
+body[data-header-image="true"] .desktop-nav a:hover {
+  color: var(--secondary-dark);
+}
+
+body[data-header-image="true"] .desktop-nav a.active,
+body[data-header-image="true"] .mobile-nav a.active {
+  color: var(--secondary-dark);
+}
+
+/* With a photo, .site-header's own full-width band goes back to the plain
+   page background - the photo itself now lives only inside .hero, boxed to
+   the same width as the nav above it (see below), instead of stretching
+   edge to edge. */
+body[data-header-image="true"] .site-header {
+  background: var(--paper);
+  color: var(--on-page);
+}
+
+body[data-header-image="true"] .hero {
+  background: var(--hero-photo-background);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  padding: 56px 48px;
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 25%);
+  color: var(--on-secondary);
+}
+
+body[data-header-image="true"] .hero-copy {
+  padding: 0;
 }
 
 .brand {
@@ -226,15 +270,6 @@ body[data-logo-display="text"] .hero-art > .company-logo-slot {
   padding: 60px 0;
 }
 
-body[data-header-image="true"] .hero-copy {
-  padding: 32px;
-  background: var(--header-primary-surface);
-  border: 1px solid color-mix(in srgb, var(--brand) 24%, transparent);
-  border-radius: 22px;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 18%);
-  backdrop-filter: blur(4px);
-}
-
 .eyebrow {
   margin: 0 0 12px;
   color: var(--brand);
@@ -246,10 +281,6 @@ body[data-header-image="true"] .hero-copy {
 
 .hero .eyebrow {
   color: color-mix(in srgb, var(--brand-light) 75%, var(--on-secondary));
-}
-
-body[data-header-image="true"] .hero .eyebrow {
-  color: var(--brand-dark);
 }
 
 h1,
@@ -280,6 +311,16 @@ h3 {
   margin: 0 0 28px;
   color: color-mix(in srgb, var(--on-secondary) 72%, transparent);
   font-size: 18px;
+}
+
+/* Extra contrast insurance for white text sitting directly on a photo -
+   the gradient scrim (baked into --hero-background) does most of the
+   work, this just guards against an unusually bright patch of the photo
+   landing right behind the text. */
+body[data-header-image="true"] .hero h1,
+body[data-header-image="true"] .hero-description,
+body[data-header-image="true"] .page-banner h1 {
+  text-shadow: 0 2px 18px rgb(0 0 0 / 35%);
 }
 
 .hero-actions {
@@ -329,7 +370,7 @@ h3 {
 .hero-image-wrap,
 .hero-monogram {
   position: relative;
-  width: min(100%, 310px);
+  width: min(100%, var(--logo-size, 310px));
   aspect-ratio: 1;
   overflow: hidden;
   background: var(--secondary-dark);
@@ -1131,6 +1172,17 @@ body > main,
     background: var(--on-secondary);
   }
 
+  /* Same light-nav-surface issue as the desktop nav links: the hamburger
+     bars default to --on-secondary (white), invisible once the nav bar
+     itself is light (data-header-image="true"). */
+  body[data-header-image="true"] .menu-button {
+    background: color-mix(in srgb, var(--secondary-dark) 10%, transparent);
+  }
+
+  body[data-header-image="true"] .menu-button > span:not(.sr-only) {
+    background: var(--secondary-dark);
+  }
+
   .mobile-nav {
     position: fixed;
     z-index: 19;
@@ -1223,6 +1275,11 @@ body > main,
 
   .hero-copy {
     padding: 45px 0;
+  }
+
+  body[data-header-image="true"] .hero {
+    padding: 28px 20px;
+    border-radius: 18px;
   }
 
   h1 {
@@ -1522,6 +1579,12 @@ body[data-template="centered"] .hero-actions {
   background: var(--hero-background);
   background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
+}
+
+body[data-header-image="true"] .page-site-header {
+  background: var(--paper);
+  color: var(--on-page);
 }
 
 .page-banner {
@@ -1533,14 +1596,14 @@ body[data-template="centered"] .hero-actions {
 }
 
 body[data-header-image="true"] .page-banner {
-  min-height: auto;
-  margin-block: 55px;
-  padding: 32px;
-  background: var(--header-primary-surface);
-  border: 1px solid color-mix(in srgb, var(--brand) 24%, transparent);
-  border-radius: 22px;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 18%);
-  backdrop-filter: blur(4px);
+  background: var(--hero-photo-background);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  padding: 48px;
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 25%);
+  color: var(--on-secondary);
 }
 
 .page-banner h1 {
@@ -1603,6 +1666,11 @@ body[data-header-image="true"] .page-banner {
   .page-banner {
     width: min(100% - 28px, 1160px);
     min-height: 210px;
+  }
+
+  body[data-header-image="true"] .page-banner {
+    padding: 24px 20px;
+    border-radius: 18px;
   }
 
   .page-site-header {
