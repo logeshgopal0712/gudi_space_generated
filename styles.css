@@ -168,7 +168,12 @@ body[data-header-image="true"] .hero {
   padding: 56px 48px;
   border-radius: 24px;
   box-shadow: 0 30px 80px rgb(0 0 0 / 25%);
-  color: var(--on-secondary);
+  /* Fixed white, NOT var(--on-secondary) - this box always sits on the
+     same dark photo+scrim no matter what the palette is, so its text can't
+     follow the theme's light/dark flip. A light palette (light secondary)
+     would otherwise flip --on-secondary to dark text, which is unreadable
+     against the dark photo. */
+  color: #ffffff;
 }
 
 body[data-header-image="true"] .hero-copy {
@@ -281,6 +286,19 @@ body[data-logo-display="text"] .hero-art > .company-logo-slot {
 
 .hero .eyebrow {
   color: color-mix(in srgb, var(--brand-light) 75%, var(--on-secondary));
+}
+
+body[data-header-image="true"] .hero .eyebrow,
+body[data-header-image="true"] .page-banner .eyebrow {
+  color: var(--brand-light);
+}
+
+body[data-header-image="true"] .hero-description {
+  color: rgb(255 255 255 / 85%);
+}
+
+body[data-header-image="true"] .secondary-link {
+  color: rgb(255 255 255 / 92%);
 }
 
 h1,
