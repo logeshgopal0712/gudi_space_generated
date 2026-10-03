@@ -693,6 +693,15 @@ function applyTemplateData(template) {
   const pageColor =
     normalizeHexColor(template.pageColor) || "#fbfaf7";
   const transparent = template.transparentPageColor === true;
+  // The transparent custom-background mode renders a multi-stop radial
+  // gradient behind the whole page (see body.style.background below) that
+  // varies a lot in lightness across the page - from a light patch to a
+  // noticeably darker one. Text color elsewhere is picked once, off a
+  // flattened "average" of that gradient, so it can land on the wrong
+  // patch and lose contrast (this is what was happening to the footer).
+  // This flag lets specific low-emphasis text (like the footer) opt into
+  // a small guaranteed-contrast backing instead of trusting the average.
+  document.body.dataset.pageGradient = String(usePageBackground && transparent);
   const opacityValue = Number(template.pageColorOpacity);
   const opacity = Number.isFinite(opacityValue)
     ? Math.max(10, Math.min(100, opacityValue))

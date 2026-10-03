@@ -1161,6 +1161,23 @@ body > main,
   text-align: right;
 }
 
+/* The decorative gradient background (see data-page-gradient note in
+   script.js) can get dark enough in spots that the footer's own text color
+   (picked off an average of that gradient) loses contrast. Give the
+   footer copy a small guaranteed-light backing + fixed dark text instead
+   of trusting the average, so it stays readable no matter which part of
+   the gradient it lands on. Scoped to this one mode only - everyone else's
+   footer is untouched. */
+body[data-page-gradient="true"] .footer-meta {
+  padding: 8px 14px;
+  background: rgb(255 255 255 / 85%);
+  border-radius: 10px;
+}
+
+body[data-page-gradient="true"] .site-footer small {
+  color: #172238;
+}
+
 .gudispace-attribution a {
   color: inherit;
   font-weight: 700;
