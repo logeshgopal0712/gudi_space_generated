@@ -1131,37 +1131,65 @@ async function renderGallery(images = currentSiteData?.gallery) {
   }
 }
 
+async function fetchHomeSectionPage(page, attempt = 1) {
+  try {
+    const response = await fetch(page, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Could not load ${page} (${response.status}).`);
+    }
+    const source = await response.text();
+    const parsed = new DOMParser().parseFromString(source, "text/html");
+    const main = parsed.querySelector("main");
+    if (!main) throw new Error(`${page} does not contain a main section.`);
+    return { page, content: main.innerHTML };
+  } catch (error) {
+    // A single flaky request (a dev server hiccup, a dropped connection)
+    // used to take down the ENTIRE homepage, because all 6 pages were
+    // fetched with Promise.all - one failure rejected the whole batch and
+    // blanked out sections that had already loaded fine. One retry clears
+    // most of these transient cases without the person needing to reload.
+    if (attempt < 2) {
+      return fetchHomeSectionPage(page, attempt + 1);
+    }
+    console.error(`loadHomeSections: giving up on ${page} after retry`, error);
+    return { page, content: null, error };
+  }
+}
+
 async function loadHomeSections() {
   const container = document.querySelector("#home-sections");
   if (!container) return;
   const status = document.querySelector("#home-sections-status");
   const pages = (container.dataset.pages || "").split(",").filter(Boolean);
-  try {
-    const pageDocuments = await Promise.all(
-      pages.map(async (page) => {
-        const response = await fetch(page, { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error(`Could not load ${page} (${response.status}).`);
-        }
-        const source = await response.text();
-        const parsed = new DOMParser().parseFromString(source, "text/html");
-        const main = parsed.querySelector("main");
-        if (!main) throw new Error(`${page} does not contain a main section.`);
-        return { page, content: main.innerHTML };
-      }),
-    );
+  // Each page is now independent - Promise.all still waits for all of
+  // them, but fetchHomeSectionPage never rejects, so one page failing
+  // (even after its retry) no longer takes the other five down with it.
+  const pageDocuments = await Promise.all(
+    pages.map((page) => fetchHomeSectionPage(page)),
+  );
 
-    status.remove();
-    pageDocuments.forEach(({ page, content }) => {
-      const section = document.createElement("section");
-      section.className = "home-page-section";
-      section.id = page.replace(/\.html$/, "");
-      section.innerHTML = content;
-      container.append(section);
-    });
-  } catch (error) {
-    status.textContent = error.message;
-    status.classList.add("error");
+  status.remove();
+  let failedCount = 0;
+  pageDocuments.forEach(({ page, content, error }) => {
+    if (content === null) {
+      failedCount += 1;
+      return;
+    }
+    const section = document.createElement("section");
+    section.className = "home-page-section";
+    section.id = page.replace(/\.html$/, "");
+    section.innerHTML = content;
+    container.append(section);
+  });
+
+  if (failedCount > 0) {
+    const notice = document.createElement("p");
+    notice.className = "data-status error";
+    notice.textContent =
+      failedCount === pages.length
+        ? "Could not load this page's sections. Try refreshing."
+        : `${failedCount} section${failedCount === 1 ? "" : "s"} could not load. Try refreshing.`;
+    container.append(notice);
   }
 }
 

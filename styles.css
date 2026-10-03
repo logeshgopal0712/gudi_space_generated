@@ -133,22 +133,25 @@ body[data-header-image="true"] .mobile-nav {
 }
 
 /* The nav surface above is light regardless of theme (it's a near-white
-   tint, see --header-secondary-surface), but the link text still used
-   --on-secondary - the color meant for a DARK surface - so it was rendering
-   near-white text on a near-white bar. Switch to --secondary-dark (already
-   dark in every theme) so it reads against the light bar instead. */
+   tint, see --header-secondary-surface). The link text needs a color that
+   is dark NO MATTER WHAT - using --secondary-dark seemed right, but it's
+   only "secondary, mixed darker" - for a palette whose secondary is
+   already light (one of the new light palettes), that mix is still light,
+   so it was still low-contrast against the light bar. Using a fixed ink
+   color instead - not derived from the theme at all - fixes it for every
+   palette, light or dark. */
 body[data-header-image="true"] .desktop-nav a,
 body[data-header-image="true"] .mobile-nav a {
-  color: color-mix(in srgb, var(--secondary-dark) 80%, transparent);
+  color: rgb(23 34 56 / 80%);
 }
 
 body[data-header-image="true"] .desktop-nav a:hover {
-  color: var(--secondary-dark);
+  color: #172238;
 }
 
 body[data-header-image="true"] .desktop-nav a.active,
 body[data-header-image="true"] .mobile-nav a.active {
-  color: var(--secondary-dark);
+  color: #172238;
 }
 
 /* With a photo, .site-header's own full-width band goes back to the plain
@@ -1207,15 +1210,15 @@ body[data-page-gradient="true"] .site-footer small {
     background: var(--on-secondary);
   }
 
-  /* Same light-nav-surface issue as the desktop nav links: the hamburger
-     bars default to --on-secondary (white), invisible once the nav bar
-     itself is light (data-header-image="true"). */
+  /* Same light-nav-surface issue as the desktop nav links, and same real
+     fix: a fixed ink color instead of --secondary-dark, which stays light
+     for any palette whose secondary is already light. */
   body[data-header-image="true"] .menu-button {
-    background: color-mix(in srgb, var(--secondary-dark) 10%, transparent);
+    background: rgb(23 34 56 / 10%);
   }
 
   body[data-header-image="true"] .menu-button > span:not(.sr-only) {
-    background: var(--secondary-dark);
+    background: #172238;
   }
 
   .mobile-nav {
