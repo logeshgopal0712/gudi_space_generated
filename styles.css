@@ -15,7 +15,12 @@
   --on-page: #172238;
   --page-blur: 0px;
   --header-primary-surface: color-mix(in srgb, var(--brand) 6%, rgb(255 255 255 / 97%));
-  --header-secondary-surface: color-mix(in srgb, var(--secondary) 6%, rgb(255 255 255 / 97%));
+  /* Solid (not transparent) so a busy photo never bleeds through and the
+     nav text stays readable - but colored by the actual theme (secondary),
+     not forced toward white, so a dark palette gets a dark nav and a light
+     palette gets a light one, instead of every site getting the same
+     always-light bar regardless of what the person picked. */
+  --header-secondary-surface: color-mix(in srgb, var(--secondary) 94%, white);
   --hero-background: radial-gradient(circle at 82% 42%, color-mix(in srgb, var(--brand) 28%, transparent), transparent 26rem), linear-gradient(135deg, var(--secondary-dark), var(--secondary) 58%, var(--secondary-dark));
   --border: #e3e3df;
   --shadow: 0 20px 55px rgba(23, 34, 56, 0.12);
@@ -132,26 +137,20 @@ body[data-header-image="true"] .mobile-nav {
   border-color: color-mix(in srgb, var(--secondary) 24%, transparent);
 }
 
-/* The nav surface above is light regardless of theme (it's a near-white
-   tint, see --header-secondary-surface). The link text needs a color that
-   is dark NO MATTER WHAT - using --secondary-dark seemed right, but it's
-   only "secondary, mixed darker" - for a palette whose secondary is
-   already light (one of the new light palettes), that mix is still light,
-   so it was still low-contrast against the light bar. Using a fixed ink
-   color instead - not derived from the theme at all - fixes it for every
-   palette, light or dark. */
+/* --header-secondary-surface is now solid AND theme-colored (see its
+   definition above) - dark for a dark palette, light for a light one - so
+   the link text can go back to following the theme too, via --on-secondary
+   (already correctly dark-on-light or light-on-dark, since it's computed
+   from secondary's own lightness). */
 body[data-header-image="true"] .desktop-nav a,
 body[data-header-image="true"] .mobile-nav a {
-  color: rgb(23 34 56 / 80%);
+  color: color-mix(in srgb, var(--on-secondary) 80%, transparent);
 }
 
-body[data-header-image="true"] .desktop-nav a:hover {
-  color: #172238;
-}
-
+body[data-header-image="true"] .desktop-nav a:hover,
 body[data-header-image="true"] .desktop-nav a.active,
 body[data-header-image="true"] .mobile-nav a.active {
-  color: #172238;
+  color: var(--on-secondary);
 }
 
 /* With a photo, .site-header's own full-width band goes back to the plain
@@ -1210,15 +1209,14 @@ body[data-page-gradient="true"] .site-footer small {
     background: var(--on-secondary);
   }
 
-  /* Same light-nav-surface issue as the desktop nav links, and same real
-     fix: a fixed ink color instead of --secondary-dark, which stays light
-     for any palette whose secondary is already light. */
+  /* Same reasoning as the desktop nav links above: the surface now follows
+     the theme, so the icon can go back to --on-secondary too. */
   body[data-header-image="true"] .menu-button {
-    background: rgb(23 34 56 / 10%);
+    background: color-mix(in srgb, var(--on-secondary) 10%, transparent);
   }
 
   body[data-header-image="true"] .menu-button > span:not(.sr-only) {
-    background: #172238;
+    background: var(--on-secondary);
   }
 
   .mobile-nav {
